@@ -8,4 +8,4 @@ var map
 #also ensure all areas and collisionshapes are made correctly, including signals
 func _on_Area_input_event(camera, event, click_position, click_normal, shape_idx):
 	if Input.is_action_just_released("Left_Click"):
-		map.MoveSelectedUnitTo(TileX,TileY)
+		map.GeneratePathTo(TileX,TileY)

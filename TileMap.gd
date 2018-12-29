@@ -3,14 +3,12 @@ extends Spatial
 var tileTypes = {} #Types of tiles (Grass, Mountain, Water, etc)
 var tiles = [] #2D array that contains integer representaions of the map
 var graph = [] #2D array to contain graph of nodes
+var currentPath = [] #Array that becomes path
 
-#var sorter = OrderByDist.new()
 var mapSizeX = 10
 var mapSizeY = 10
 
 var selectedUnit #Unit that is moving around
-
-var i = 0
 
 #Can't call this "Node," Godot already has these
 class Nodule:
@@ -20,14 +18,6 @@ class Nodule:
 	func DistanceTo(node):
 		return Vector2(x,y).distance_to(Vector2(node.x,node.y))
 
-#Custom sorter
-class OrderByDist:
-	var dist = null
-	func SetDict(d):
-		dist = d
-	func sort(a, b):
-		return dist[a] < dist[b]
-
 func _ready():
 	#Grab reference to unit
 	selectedUnit = self.get_node("Unit")
@@ -36,10 +26,6 @@ func _ready():
 	CreatePrefabs()
 	GeneratePathfindingGraph()
 	GenerateMapVisuals()
-
-func _process(delta):
-	print(i)
-	i += 1
 
 #Creates 2D array
 func CreateMap():
@@ -102,8 +88,9 @@ func GenerateMapVisuals():
 func TileCoordToWorldCoord(x,y):
 	return Vector3(x,y,0)*2
 
-func MoveSelectedUnitTo(x,y):
-	#selectedUnit.translation = TileCoordToWorldCoord(x,y)
+func GeneratePathTo(x,y):
+	currentPath.clear()
+	selectedUnit.path.clear()
 	#distance to a node
 	var dist = {}
 	#which node was the previous node of key node
@@ -113,10 +100,10 @@ func MoveSelectedUnitTo(x,y):
 	#Start node
 	var source = graph[selectedUnit.tileX][selectedUnit.tileY]
 	var target = graph[x][y]
-	#sorter.SetDict(dist)
 	dist[source] = 0
 	prev[source] = null
 	#init everything to inf distance so they're not picked over an actual path.
+	#Need two for loops to cover secondary arrays
 	for i in graph:
 		for j in i:
 			if !(j == source):
@@ -126,7 +113,6 @@ func MoveSelectedUnitTo(x,y):
 	
 	#While our queue still has nodes in it
 	while !unvisited.empty():
-		#unvisited.sort_custom(self, "sort")
 		var u = null
 		
 		for i in unvisited:
@@ -135,12 +121,27 @@ func MoveSelectedUnitTo(x,y):
 		
 		if u == target:
 			break
-
+			
+		unvisited.erase(u)
+		
 		for vertex in u.neighbours:
 			var alt = dist[u] + u.DistanceTo(vertex)
 			if alt < dist[vertex]:
 				dist[vertex] = alt
 				prev[vertex] = u
+	
+	#Either we've found our target or there is no route
+	if prev[target] == null:
+		#no route to target
+		return
+	#Generate path
+	var curr = target;
+	while curr != null:
+		currentPath.append(curr)
+		curr = prev[curr]
+	#reverse path to get correct sequence
+	currentPath.invert()
+	selectedUnit.path = currentPath
 
 func CreatePrefabs():
 	#Load prefab scenes
