@@ -2,11 +2,16 @@ extends Spatial
 
 var tileTypes = {} #Types of tiles (Grass, Mountain, Water, etc)
 var tiles = [] #2D array that contains integer representaions of the map
+var graph = [] #2D array to contain graph of nodes
 
 var mapSizeX = 10
 var mapSizeY = 10
 
-var selectedUnit
+var selectedUnit #Unit that is moving around
+
+#Can't call this "Node," Godot already has these
+class Nodule:
+	var neighbours = []
 
 func _ready():
 	#Grab reference to unit
@@ -14,6 +19,7 @@ func _ready():
 	#Initialize map tiles
 	CreateMap()
 	CreatePrefabs()
+	GeneratePathfindingGraph()
 	GenerateMapVisuals()
 
 #Creates 2D array
@@ -54,13 +60,30 @@ func GenerateMapVisuals():
 			#Move tile to correct spot in game world
 			obj.translate(Vector3(x, y, 0)*2) #Cube meshes are 2x2x2 by defualt
 
+func GeneratePathfindingGraph():
+	#initialize graph
+	for x in range(mapSizeX):
+		graph.append([])
+		graph[x].resize(mapSizeY)
+		for y in range(mapSizeY):
+			var n = Nodule.new()
+			graph[x][y] = n
+	#set neighbors (Cannot be done in prev step as not all neighbors have been instanced)
+	for x in range(mapSizeX):
+		for y in range(mapSizeY):
+			if x > 0 : graph[x][y].neighbours.append(graph[x-1][y])
+			if x < mapSizeX - 1  : graph[x][y].neighbours.append(graph[x+1][y])
+			if y > 0 : graph[x][y].neighbours.append(graph[x][y-1])
+			if y < mapSizeY - 1  : graph[x][y].neighbours.append(graph[x][y+1])
+
 func TileCoordToWorldCoord(x,y):
 	return Vector3(x,y,0)*2
 
 func MoveSelectedUnitTo(x,y):
-	selectedUnit.tileX = x
+	"""selectedUnit.tileX = x
 	selectedUnit.tileY = y
-	selectedUnit.translation = TileCoordToWorldCoord(x,y)
+	selectedUnit.translation = TileCoordToWorldCoord(x,y)"""
+	
 
 func CreatePrefabs():
 	#Load prefab scenes
