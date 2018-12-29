@@ -6,7 +6,11 @@ var tiles = [] #2D array that contains integer representaions of the map
 var mapSizeX = 10
 var mapSizeY = 10
 
+var selectedUnit
+
 func _ready():
+	#Grab reference to unit
+	selectedUnit = self.get_node("Unit")
 	#Initialize map tiles
 	CreateMap()
 	CreatePrefabs()
@@ -35,18 +39,35 @@ func CreateMap():
 	tiles[4][6] = 2
 
 func GenerateMapVisuals():
-	for y in range(mapSizeY):
-		for x in range(mapSizeX):
-			var tt = tiles[y][x] #Grab 
-			print(tileTypes[tt])
-			var obj = tileTypes[tt].instance()
+	for x in range(mapSizeX):
+		for y in range(mapSizeY):
+			#Grab tile type from dict
+			var tt = tiles[x][y] 
+			#instantiate
+			var obj = tileTypes[tt].instance() 
+			# add as child to keep reference to object
 			self.add_child(obj) 
-			obj.translate(Vector3(y, x, 0)*2) #Cube meshes are 2x2x2 by defualt
+			#set tile's x and y coordinates independant of offset
+			obj.TileX = x
+			obj.TileY = y
+			obj.map = self
+			#Move tile to correct spot in game world
+			obj.translate(Vector3(x, y, 0)*2) #Cube meshes are 2x2x2 by defualt
+
+func TileCoordToWorldCoord(x,y):
+	return Vector3(x,y,0)*2
+
+func MoveSelectedUnitTo(x,y):
+	selectedUnit.tileX = x
+	selectedUnit.tileY = y
+	selectedUnit.translation = TileCoordToWorldCoord(x,y)
 
 func CreatePrefabs():
+	#Load prefab scenes
 	var grass = load("res://Grass.tscn")
 	var mountain = load("res://Mountain.tscn")
 	var swamp = load("res://Swamp.tscn")
+	#add prefab scenes to dict
 	tileTypes[0] = grass
 	tileTypes[1] = swamp
 	tileTypes[2] = mountain
