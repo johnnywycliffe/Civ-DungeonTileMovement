@@ -2,5 +2,5 @@
 
 [resource]
 
-ambient_light_color = Color( 0.533333, 0.533333, 0.533333, 1 )
+ambient_light_color = Color( 0.913725, 0.913725, 0.913725, 1 )
 
